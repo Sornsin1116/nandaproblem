@@ -18,19 +18,18 @@ mapping_file = os.path.join(DATA_PATH, "disease_mapping.json")
 # ==============================
 X_train = pd.read_csv(X_train_file)
 X_test = pd.read_csv(X_test_file)
-y_train = pd.read_csv(y_train_file).squeeze()  # pd.Series
-y_test = pd.read_csv(y_test_file).squeeze()    # pd.Series
+y_train = pd.read_csv(y_train_file).squeeze()
+y_test = pd.read_csv(y_test_file).squeeze()
 
 with open(mapping_file, "r") as f:
     label_mapping = json.load(f)
 
-# Inverse mapping for decoding
 inverse_mapping = {v: k for k, v in label_mapping.items()}
 
-print("Loaded processed data successfully.")
-print("X_train shape:", X_train.shape)
-print("y_train shape:", y_train.shape)
-print("Label mapping:", label_mapping)
+print("✅ Loaded processed data successfully.")
+print(f"📊 X_train shape: {X_train.shape}")
+print(f"🎯 y_train shape: {y_train.shape}")
+print(f"🩺 Total diseases: {len(label_mapping)}\n")
 
 # ==============================
 # Train model
@@ -50,8 +49,6 @@ def predict_patients(patients: list[dict[str, int]]):
     for i, patient in enumerate(patients):
         disease_id = preds[i]
         disease_name = inverse_mapping[disease_id]
-
-        # Build probability dict
         prob_dict = {inverse_mapping[j]: float(preds_prob[i][j]) for j in range(len(preds_prob[i]))}
 
         results.append({
@@ -77,11 +74,19 @@ example_patients = [
 
 results = predict_patients(example_patients)
 
-for r in results:
-    print("\nPatient Symptoms:", r["patient_symptoms"])
-    print("Predicted Disease:", r["predicted_disease"])
-    print("Top 5 Disease Probabilities:")
-    # Sort top 5
+# ==============================
+# Pretty Output
+# ==============================
+for idx, r in enumerate(results, 1):
+    print("═" * 60)
+    print(f"👩‍⚕️ Patient #{idx}")
+    print("🧩 Symptoms:")
+    for k, v in r["patient_symptoms"].items():
+        if v == 1:
+            print(f"   ✅ {k}")
+    print(f"\n🔮 Predicted Disease: 🌡️  {r['predicted_disease']}")
+    print("\n📈 Top 5 Possible Diseases:")
     top5 = sorted(r["disease_probabilities"].items(), key=lambda x: x[1], reverse=True)[:5]
     for disease, prob in top5:
-        print(f"  {disease}: {prob:.3f}")
+        print(f"   • {disease:<35} →  {prob:.3f}")
+    print("═" * 60 + "\n")
